@@ -41,9 +41,6 @@ let GameManager = (function() {
     UIManager.boardOverlay.addEventListener('click', startGame);
     
     function initialisePlayers() {
-        // Howwww should I do this
-        // There are always 2 Players, 1 and 2. I'll keep them in this order.
-        // I will get the order of symbols from the UI and assign them that way (players stay in the same spots, symbols swap)
         for (let i = 0; i < states.length; i++) {
             // For each state, create corresponding Player
             players.push(Player((i + 1), states[i]));
@@ -52,7 +49,7 @@ let GameManager = (function() {
 
     function swapPlayerInfo() {
         states.reverse();
-        UIManager.updatePlayerInfo();
+        UIManager.updatePlayerInfo(states);
     }
 
     function startGame() {
@@ -62,6 +59,7 @@ let GameManager = (function() {
 
         // Unbind/disable UI
         UIManager.hideBoardOverlay();
+        initialisePlayers();
     }
 
     return {
