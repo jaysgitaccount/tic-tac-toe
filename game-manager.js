@@ -30,12 +30,12 @@ let UIManager = (function() {
 
 let GameManager = (function() {
     // I want this to manage the entire gameplay loop.
-    // Needs to receive data: player info, board size
     // Needs to initialise players/board, manage turns/active player, feed active player to board
     // Unsure if I want to store win state logic here
 
     const states = ["X", "O"];
     const players = [];
+    let currentActivePlayer;
 
     // Initialise UI
     UIManager.updatePlayerInfo(states);
@@ -54,25 +54,66 @@ let GameManager = (function() {
         UIManager.updatePlayerInfo(states);
     }
 
-    function startGame() {
-        // disable swap button
-        // hide board overlay
-        // begin
-
-        // Unbind/disable UI
-        disableUI();
-        initialisePlayers();
-    }
-
     function disableUI() {
         UIManager.swapButton.removeEventListener('click', swapPlayerInfo);
         UIManager.boardOverlay.removeEventListener('click', startGame);
         UIManager.hideUI();
     }
-    
+
+    function startGame() {
+        disableUI();
+        initialisePlayers();
+
+        let { turnCounter, totalTurns } = TurnManager.startNewTurn();
+        // Basic game flow:
+        // start with random active player
+        // somehow feed this to the board
+        // when a tile is clicked on, switch active players/set timeout
+        // repeat until game ends
+        setCurrentActivePlayer(turnCounter);
+    }
+
+    function setCurrentActivePlayer(index) {
+        currentActivePlayer = players[index];
+    }
+
+    function getCurrentActivePlayer() {
+        return currentActivePlayer;
+    }
+
+    let TurnManager = (function() {
+        // Random player starts
+        let turnCounter = Math.round(Math.random());
+        let totalTurns = 0;
+
+        function startNewTurn() {
+            // If it's NOT the first turn, switch turns
+            if (totalTurns > 0) {
+                turnCounter = 
+                    turnCounter === 1
+                        ? 0
+                        : 1
+            }
+            // Increment total turns for UI
+            totalTurns++;
+            
+            return {
+                totalTurns,
+                turnCounter
+            }
+        }
+
+        return {
+            startNewTurn
+        }
+    })();
+
+    return {
+        getCurrentActivePlayer
+    }
 })();
 
-(function Gameboard() {
+let Gameboard = (function() {
     const board = document.querySelector('#board');
     const template = document.querySelector('template').content.firstElementChild;
     // Store gameboard as 2D array inside object
@@ -86,10 +127,13 @@ let GameManager = (function() {
         boardRows[i] = new Array(boardSize);
     }
 
-    _render();
+    function initialiseBoard() {
+        _render();
+    }
+    
 
     function _render() {
-        // Initialise the board
+        // Initialise the tiles
         for (let i = 0; i < boardRows.length; i++) {
             for (let j = 0; j < boardRows[i].length; j++) {
                 boardRows[i][j] = Tile();
