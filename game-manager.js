@@ -1,7 +1,3 @@
-// Gameboard - board
-// Game manager object - gameplay
-// Players
-
 let UIManager = (function() {
     const swapButton = document.querySelector('#swap-button');
     const playerDisplayTexts = ["Player 1 = ", "Player 2 = "];
@@ -63,6 +59,7 @@ let GameManager = (function() {
     function startGame() {
         disableUI();
         initialisePlayers();
+        Gameboard.initialiseBoard();
 
         let { turnCounter, totalTurns } = TurnManager.startNewTurn();
         // Basic game flow:
@@ -136,7 +133,7 @@ let Gameboard = (function() {
         // Initialise the tiles
         for (let i = 0; i < boardRows.length; i++) {
             for (let j = 0; j < boardRows[i].length; j++) {
-                boardRows[i][j] = Tile();
+                boardRows[i][j] = createTile();
             }
         }
         _resizeTiles();
@@ -146,25 +143,26 @@ let Gameboard = (function() {
         board.style.setProperty('--board-size', boardSize);
     }
 
-    function Tile() {
+    function createTile() {
         // Factory function that creates game tiles
         // Needs to be able to start empty, show X or O on hover
         // click to be "claimed" by X or O player
         // When turn ends (on click), save the state, display state/state and unbind event listener
-
-        init();
-
-        function init() {
-            let tile = template.cloneNode(true);
-            board.appendChild(tile);
-            // Bind events
-            tile.addEventListener('mouseover', displayState);
-            tile.addEventListener('click', submitState);
-        }
+        let tile = template.cloneNode(true);
+        board.appendChild(tile);
+        // Bind events
+        tile.addEventListener('mouseover', displayState);
+        tile.addEventListener('mouseout', clearState);
+        tile.addEventListener('click', submitState);
 
         function displayState() {
             // show X or O when hovering, depending on active player
-            console.log('displayState');
+            let symbol = GameManager.getCurrentActivePlayer().symbol;
+            tile.textContent = symbol;
+        }
+
+        function clearState() {
+            tile.textContent = "";
         }
 
         function submitState() {
@@ -176,11 +174,10 @@ let Gameboard = (function() {
             // Set the state from the active player (from GameManager)
             state = player.symbol;
         }
+    }
 
-        return {
-            init,
-            setState,
-        }
+    return {
+        initialiseBoard
     }
 })();
 
