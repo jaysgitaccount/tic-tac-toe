@@ -128,7 +128,6 @@ let Gameboard = (function() {
         _render();
     }
     
-
     function _render() {
         // Initialise the tiles
         for (let i = 0; i < boardRows.length; i++) {
@@ -144,45 +143,40 @@ let Gameboard = (function() {
     }
 
     function createTile() {
-        // Factory function that creates game tiles
-        // Needs to be able to start empty, show X or O on hover
-        // click to be "claimed" by X or O player
-        // When turn ends (on click), save the state, display state/state and unbind event listener
+        let symbol;
         let tile = template.cloneNode(true);
         board.appendChild(tile);
         // Bind events
         tile.addEventListener('mouseover', displayState);
         tile.addEventListener('mouseout', clearState);
-        tile.addEventListener('click', submitState);
+        tile.addEventListener('click', publishState);
 
         function displayState() {
             // show X or O when hovering, depending on active player
-            let symbol = GameManager.getCurrentActivePlayer().symbol;
-            tile.textContent = symbol;
+            let tempSymbol = GameManager.getCurrentActivePlayer().symbol;
+            tile.textContent = tempSymbol;
         }
 
         function clearState() {
             tile.textContent = "";
         }
 
-        function submitState() {
+        function publishState() {
             // on click, store X or O, inform GameManager to end turn
-            console.log('submitState');
+            // Also, need to clear all event listeners
+            tile.removeEventListener('mouseover', displayState);
+            tile.removeEventListener('mouseout', clearState);
+            tile.removeEventListener('click', publishState);
+            symbol = GameManager.getCurrentActivePlayer().symbol;
+            tile.textContent = symbol;
         }
 
-        function setState(player) {
-            // Set the state from the active player (from GameManager)
-            state = player.symbol;
-        }
     }
 
     return {
         initialiseBoard
     }
 })();
-
-// I want the player to be able to select "PvP" or "vs AI" and be able to select if they want to be X or O (or swap symbols I guess)
-// Customise # of chain needed to win?
 
 function Player(number, symbol) {
     // Player object: Factory function
