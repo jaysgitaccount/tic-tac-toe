@@ -1,0 +1,35 @@
+#board {
+    --board-size: 0;
+
+    display: grid;
+    height: 100%;
+    width: 100%;
+    border: solid 1px black;
+    grid-template-columns: repeat(var(--board-size), 1fr);
+    grid-template-rows: repeat(var(--board-size), 1fr);
+}
+
+.board-wrapper {
+    position: relative;
+    width: 400px;
+    height: 400px;
+}
+
+.board-wrapper #board-overlay {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    background-color: rgba(0,0,0,0.5);
+    font-size: 2rem;
+}
+
+.tile {
+    border: solid 1px red;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

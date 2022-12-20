@@ -4,10 +4,25 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" src="./style.css" />
+    <link rel="stylesheet" href="./style.css" />
     <title>Play Tic Tac Toe!</title>
 </head>
 <body>
-    
+    <p>Tic Tac Toe</p>
+    <div>
+        <button type="button" id="swap-button">Swap</button>
+        <div id="player-display">
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+    <div class="board-wrapper">
+        <div id="board-overlay">Click to start game</div>
+        <div id="board"></div>
+    </div>
+    <template>
+        <div class="tile"></div>
+    </template>
+    <script src="./game-manager.js"></script>
 </body>
 </html>
