@@ -15,13 +15,15 @@ let UIManager = (function() {
         })
     }
 
-    function hideBoardOverlay() {
+    function hideUI() {
         boardOverlay.style.display = "none";
+        swapButton.style.display = "none";
     }
+
     return {
         swapButton,
         boardOverlay,
-        hideBoardOverlay,
+        hideUI,
         updatePlayerInfo
     }
 })();
@@ -58,13 +60,16 @@ let GameManager = (function() {
         // begin
 
         // Unbind/disable UI
-        UIManager.hideBoardOverlay();
+        disableUI();
         initialisePlayers();
     }
 
-    return {
-        states
+    function disableUI() {
+        UIManager.swapButton.removeEventListener('click', swapPlayerInfo);
+        UIManager.boardOverlay.removeEventListener('click', startGame);
+        UIManager.hideUI();
     }
+    
 })();
 
 (function Gameboard() {
