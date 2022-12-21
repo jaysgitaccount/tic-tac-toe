@@ -1,3 +1,27 @@
+body {
+    font-family: 'Lato';
+    font-size: 1.4rem;
+}
+
+h1 {
+    font-family: 'Fredoka One';
+    font-weight: 400;
+}
+
+.center {
+    display: flex;
+    justify-content: center;
+    margin: 1rem auto;
+}
+
+
+.board-wrapper {
+    margin: 1rem auto;
+    position: relative;
+    width: 150px;
+    height: 150px;
+}
+
 #board {
     --board-size: 0;
 
@@ -9,12 +33,6 @@
     grid-template-rows: repeat(var(--board-size), 1fr);
 }
 
-.board-wrapper {
-    position: relative;
-    width: 400px;
-    height: 400px;
-}
-
 .board-wrapper #board-overlay {
     position: absolute;
     height: 100%;
@@ -24,12 +42,18 @@
     align-items: center;
     color: white;
     background-color: rgba(0,0,0,0.5);
-    font-size: 2rem;
+    font-size: 1.1rem;
 }
 
 .tile {
+    font-family: 'Fredoka One';
+    font-size: 2rem;
     border: solid 1px red;
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.tile:hover {
+    cursor: pointer;
 }
