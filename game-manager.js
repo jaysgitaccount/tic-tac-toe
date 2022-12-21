@@ -38,13 +38,6 @@ let GameManager = (function() {
     UIManager.swapButton.addEventListener('click', swapPlayerInfo);
     UIManager.boardOverlay.addEventListener('click', startGame);
     
-    function initialisePlayers() {
-        for (let i = 0; i < states.length; i++) {
-            // For each state, create corresponding Player
-            players.push(Player((i + 1), states[i]));
-        }
-    }
-
     function swapPlayerInfo() {
         states.reverse();
         UIManager.updatePlayerInfo(states);
@@ -61,13 +54,19 @@ let GameManager = (function() {
         initialisePlayers();
         Gameboard.initialiseBoard();
 
-        let { turnCounter, totalTurns } = TurnManager.startNewTurn();
+        TurnManager.startNewTurn();
         // Basic game flow:
         // start with random active player
         // somehow feed this to the board
         // when a tile is clicked on, switch active players/set timeout
         // repeat until game ends
-        setCurrentActivePlayer(turnCounter);
+    }
+
+    function initialisePlayers() {
+        for (let i = 0; i < states.length; i++) {
+            // For each state, create corresponding Player
+            players.push(Player((i + 1), states[i]));
+        }
     }
 
     function setCurrentActivePlayer(index) {
@@ -84,19 +83,21 @@ let GameManager = (function() {
         let totalTurns = 0;
 
         function startNewTurn() {
-            // If it's NOT the first turn, switch turns
-            if (totalTurns > 0) {
-                turnCounter = 
-                    turnCounter === 1
-                        ? 0
-                        : 1
-            }
+            console.log('== NEWTURN ==')
+            console.log('Player ' + (turnCounter + 1) + "'s turn, total turns: " + totalTurns)
+
+            // Switch players
+            turnCounter = 
+                turnCounter === 1
+                    ? 0
+                    : 1
             // Increment total turns for UI
             totalTurns++;
-            
+
+            setCurrentActivePlayer(turnCounter);
             return {
-                totalTurns,
-                turnCounter
+                turnCounter,
+                totalTurns
             }
         }
 
@@ -106,6 +107,7 @@ let GameManager = (function() {
     })();
 
     return {
+        TurnManager,
         getCurrentActivePlayer
     }
 })();
@@ -142,6 +144,15 @@ let Gameboard = (function() {
         board.style.setProperty('--board-size', boardSize);
     }
 
+    function checkGameState() {
+        // If 3 in a row, that player wins
+        // If board is 100% filled AND no 3 in a row (check win first), draw
+        // If neither, continue
+        // But since this is in Board, we should just return an outcome for GameManager to handle
+
+        
+    }
+
     function createTile() {
         let symbol;
         let tile = template.cloneNode(true);
@@ -153,8 +164,8 @@ let Gameboard = (function() {
 
         function displayState() {
             // show X or O when hovering, depending on active player
-            let tempSymbol = GameManager.getCurrentActivePlayer().symbol;
-            tile.textContent = tempSymbol;
+            symbol = GameManager.getCurrentActivePlayer().symbol;
+            tile.textContent = symbol;
         }
 
         function clearState() {
@@ -169,8 +180,16 @@ let Gameboard = (function() {
             tile.removeEventListener('click', publishState);
             symbol = GameManager.getCurrentActivePlayer().symbol;
             tile.textContent = symbol;
+            triggerNextTurn();
         }
 
+        function triggerNextTurn() {
+            GameManager.TurnManager.startNewTurn();
+        }
+
+        return {
+            symbol
+        }
     }
 
     return {
@@ -188,3 +207,4 @@ function Player(number, symbol) {
         symbol
     }
 }
+
