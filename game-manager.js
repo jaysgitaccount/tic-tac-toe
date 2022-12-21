@@ -3,6 +3,7 @@ let UIManager = (function() {
     const playerDisplayTexts = ["Player 1 = ", "Player 2 = "];
     const playerDisplays = Array.from(document.querySelector('#player-display').children);
     const boardOverlay = document.querySelector('#board-overlay');
+    const turnTracker = document.querySelector('#turn-tracker');
 
     function updatePlayerInfo(states) {
         playerDisplays.forEach((text, index) => {
@@ -16,11 +17,16 @@ let UIManager = (function() {
         swapButton.style.display = "none";
     }
 
+    function updateTurnTracker() {
+        turnTracker.textContent = `${GameManager.getCurrentActivePlayer().name}'s turn`;
+    }
+
     return {
         swapButton,
         boardOverlay,
         hideUI,
-        updatePlayerInfo
+        updatePlayerInfo,
+        updateTurnTracker
     }
 })();
 
@@ -53,13 +59,7 @@ let GameManager = (function() {
         disableUI();
         initialisePlayers();
         Gameboard.initialiseBoard();
-
         TurnManager.startNewTurn();
-        // Basic game flow:
-        // start with random active player
-        // somehow feed this to the board
-        // when a tile is clicked on, switch active players/set timeout
-        // repeat until game ends
     }
 
     function initialisePlayers() {
@@ -78,25 +78,26 @@ let GameManager = (function() {
     }
 
     let TurnManager = (function() {
-        // Random player starts
-        let turnCounter = Math.round(Math.random());
+        // Generate random starting player
+        let playerCounter = Math.round(Math.random());
         let totalTurns = 0;
 
         function startNewTurn() {
-            console.log('== NEWTURN ==')
-            console.log('Player ' + (turnCounter + 1) + "'s turn, total turns: " + totalTurns)
-
-            // Switch players
-            turnCounter = 
-                turnCounter === 1
+            // First, switch players
+            playerCounter = 
+                playerCounter === 1
                     ? 0
                     : 1
-            // Increment total turns for UI
+
             totalTurns++;
 
-            setCurrentActivePlayer(turnCounter);
+            setCurrentActivePlayer(playerCounter);
+            UIManager.updateTurnTracker();
+            console.log('== NEWTURN ==')
+            console.log('Player ' + (playerCounter + 1) + "'s turn, total turns: " + totalTurns)
+
             return {
-                turnCounter,
+                playerCounter,
                 totalTurns
             }
         }
