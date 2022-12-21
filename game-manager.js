@@ -31,10 +31,6 @@ let UIManager = (function() {
 })();
 
 let GameManager = (function() {
-    // I want this to manage the entire gameplay loop.
-    // Needs to initialise players/board, manage turns/active player, feed active player to board
-    // Unsure if I want to store win state logic here
-
     const states = ["X", "O"];
     const players = [];
     let currentActivePlayer;
@@ -116,13 +112,12 @@ let GameManager = (function() {
 let Gameboard = (function() {
     const board = document.querySelector('#board');
     const template = document.querySelector('template').content.firstElementChild;
-    // Store gameboard as 2D array inside object
 
-    // First, let's make the board scalable but start at 3x3.
+    // Controls size of game board
     let boardSize = 3;
 
+    // Initialise board via 2D array
     const boardRows = new Array(boardSize);
-    // initialise 2d array
     for (let i = 0; i < boardRows.length; i++) {
         boardRows[i] = new Array(boardSize);
     }
@@ -159,29 +154,27 @@ let Gameboard = (function() {
         let tile = template.cloneNode(true);
         board.appendChild(tile);
         // Bind events
-        tile.addEventListener('mouseover', displayState);
-        tile.addEventListener('mouseout', clearState);
-        tile.addEventListener('click', publishState);
+        tile.addEventListener('mouseover', updateTileSymbol);
+        tile.addEventListener('mouseout', resetTileSymbol);
+        tile.addEventListener('click', submitTile);
 
-        function displayState() {
-            // show X or O when hovering, depending on active player
-            symbol = GameManager.getCurrentActivePlayer().symbol;
-            tile.textContent = symbol;
-        }
-
-        function clearState() {
+        function resetTileSymbol() {
             tile.textContent = "";
         }
 
-        function publishState() {
+        function submitTile() {
             // on click, store X or O, inform GameManager to end turn
             // Also, need to clear all event listeners
-            tile.removeEventListener('mouseover', displayState);
-            tile.removeEventListener('mouseout', clearState);
-            tile.removeEventListener('click', publishState);
+            tile.removeEventListener('mouseover', updateTileSymbol);
+            tile.removeEventListener('mouseout', resetTileSymbol);
+            tile.removeEventListener('click', submitTile);
+            updateTileSymbol();
+            triggerNextTurn();
+        }
+
+        function updateTileSymbol() {
             symbol = GameManager.getCurrentActivePlayer().symbol;
             tile.textContent = symbol;
-            triggerNextTurn();
         }
 
         function triggerNextTurn() {
@@ -199,9 +192,6 @@ let Gameboard = (function() {
 })();
 
 function Player(number, symbol) {
-    // Player object: Factory function
-    // Will probably initialise players within Game Manager
-    // Should be able to "apply" symbol to tile
     let name = `Player ${number}`;
     return {
         name,
