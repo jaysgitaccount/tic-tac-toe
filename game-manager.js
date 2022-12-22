@@ -30,6 +30,108 @@ let UIManager = (function() {
     }
 })();
 
+let Gameboard = (function() {
+    const board = document.querySelector('#board');
+    // Create deep copy of DOM
+    const template = document.querySelector('template').content.firstElementChild;
+
+    // Controls size of game board
+    let boardSize = 3;
+
+    // Initialise board via 2D array
+    const boardRows = new Array(boardSize);
+    for (let i = 0; i < boardRows.length; i++) {
+        boardRows[i] = new Array(boardSize);
+    }
+
+    function initialiseBoard() {
+        _render();
+    }
+    
+    function _render() {
+        // Initialise the tiles
+        for (let i = 0; i < boardRows.length; i++) {
+            for (let j = 0; j < boardRows[i].length; j++) {
+                boardRows[i][j] = createTile();
+            }
+        }
+        _resizeTiles();
+    }
+
+    function _resizeTiles() {
+        board.style.setProperty('--board-size', boardSize);
+    }
+
+    function checkTiles(player) {
+        GameManager.TurnManager.checkWin(player);
+        GameManager.TurnManager.checkDraw();
+    }
+
+    function info() {
+        console.table(boardRows);
+    }
+
+    function createTile() {
+        let symbol;
+        let tile = template.cloneNode(true);
+
+        board.appendChild(tile);
+        // Bind events
+        tile.addEventListener('mouseover', updateTileSymbol);
+        tile.addEventListener('mouseout', resetTileSymbol);
+        tile.addEventListener('click', submitTile);
+
+        function updateTileSymbol() {
+            symbol = GameManager.getCurrentActivePlayer().symbol;
+            tile.textContent = symbol;
+        }
+
+        function resetTileSymbol() {
+            tile.textContent = "";
+        }
+
+        function submitTile() {
+            // on click, store X or O, inform GameManager to end turn
+            // Also, need to clear all event listeners
+            tile.removeEventListener('mouseover', updateTileSymbol);
+            tile.removeEventListener('mouseout', resetTileSymbol);
+            tile.removeEventListener('click', submitTile);
+            updateTileSymbol();
+            checkTiles(GameManager.getCurrentActivePlayer());
+            setTimeout( () => {
+                triggerNextTurn()
+            }, 0);
+        }
+
+        function triggerNextTurn() {
+            GameManager.TurnManager.startNewTurn();
+        }
+
+        function getSymbol() {
+            return symbol;
+        }
+
+        return {
+            getSymbol
+        }
+    }
+
+    return {
+        boardSize,
+        boardRows,
+        info,
+        initialiseBoard,
+    }
+})();
+
+function Player(number, symbol) {
+    let name = `Player ${number}`;
+    return {
+        name,
+        symbol
+    }
+}
+
 let GameManager = (function() {
     const states = ["X", "O"];
     const players = [];
@@ -94,6 +196,7 @@ let GameManager = (function() {
         // Generate random starting player
         let playerCounter = Math.round(Math.random());
         let totalTurns = 0;
+        let maxTurns = Math.pow(Gameboard.boardSize, 2);
 
         function startNewTurn() {
             // First, switch players
@@ -115,8 +218,60 @@ let GameManager = (function() {
             }
         }
 
+        function checkWin(player) {
+            let outcomes = {
+                continue: "continue",
+                win: "win",
+                draw: "draw"
+            };
+            let currentOutcome = outcomes.win;
+            let isWin;
+
+            // Check positive diagonal
+            for (let i = 0; i < Gameboard.boardRows.length; i++) {
+                // We want to see if 0,0/1,1/2,2... are filled
+                let tileSymbol = Gameboard.boardRows[i][i].getSymbol();
+
+                console.log('CHECK NEW TILE, i = ' + i);
+                console.log(player);
+                console.log(tileSymbol);
+                console.log(doesPlayerOwnTile(tileSymbol, player));
+
+                if ( !(doesPlayerOwnTile(tileSymbol, player)) ) {
+                    // If this check fails, exit loop
+                    currentOutcome = outcomes.continue;
+                    break;
+                }   
+            }
+            
+            console.log(currentOutcome);
+            return isWin;
+        }
+
+        function checkDraw() {
+            let isDraw;
+
+            if (totalTurns === maxTurns) {
+                // Don't start a new turn because no tiles left.
+                // outcome: draw
+            }
+
+            return isDraw;
+        }
+
+
+        function doesPlayerOwnTile(tileSymbol, player) {
+            let isPlayerOwned = false;
+            if (tileSymbol === player.symbol) {
+                isPlayerOwned = true;
+            }
+            return isPlayerOwned;
+        }
+
         return {
-            startNewTurn
+            startNewTurn,
+            checkWin,
+            checkDraw
         }
     })();
 
@@ -125,135 +280,3 @@ let GameManager = (function() {
         getCurrentActivePlayer
     }
 })();
-
-let Gameboard = (function() {
-    const board = document.querySelector('#board');
-    // Create deep copy of DOM
-    const template = document.querySelector('template').content.firstElementChild;
-
-    // Controls size of game board
-    let boardSize = 3;
-
-    // Initialise board via 2D array
-    const boardRows = new Array(boardSize);
-    for (let i = 0; i < boardRows.length; i++) {
-        boardRows[i] = new Array(boardSize);
-    }
-
-    function initialiseBoard() {
-        _render();
-    }
-    
-    function _render() {
-        // Initialise the tiles
-        for (let i = 0; i < boardRows.length; i++) {
-            for (let j = 0; j < boardRows[i].length; j++) {
-                boardRows[i][j] = createTile();
-            }
-        }
-        _resizeTiles();
-    }
-
-    function _resizeTiles() {
-        board.style.setProperty('--board-size', boardSize);
-    }
-
-    function checkTiles(player) {
-        let outcomes = {
-            continue: "continue",
-            win: "win",
-            draw: "draw"
-        };
-        let currentOutcome = outcomes.win;
-
-        // Check positive diagonal
-        for (let i = 0; i < boardRows.length; i++) {
-            // We want to see if 0,0/1,1/2,2... are filled
-            let tileSymbol = boardRows[i][i].getSymbol();
-
-            console.log('CHECK NEW TILE, i = ' + i);
-            console.log(player);
-            console.log(tileSymbol);
-            console.log(doesPlayerOwnTile(tileSymbol, player));
-
-            if ( !(doesPlayerOwnTile(tileSymbol, player)) ) {
-                // If this check fails, exit loop
-                currentOutcome = outcomes.continue;
-                break;
-            }
-
-            console.log(currentOutcome);
-        }
-    }
-
-    function doesPlayerOwnTile(tileSymbol, player) {
-        let isPlayerOwned = false;
-        if (tileSymbol === player.symbol) {
-            isPlayerOwned = true;
-        }
-        return isPlayerOwned;
-    }
-
-    function info() {
-        console.table(boardRows);
-    }
-
-    function createTile() {
-        let symbol;
-        let tile = template.cloneNode(true);
-
-        board.appendChild(tile);
-        // Bind events
-        tile.addEventListener('mouseover', updateTileSymbol);
-        tile.addEventListener('mouseout', resetTileSymbol);
-        tile.addEventListener('click', submitTile);
-
-        function updateTileSymbol() {
-            symbol = GameManager.getCurrentActivePlayer().symbol;
-            tile.textContent = symbol;
-        }
-
-        function resetTileSymbol() {
-            tile.textContent = "";
-        }
-
-        function submitTile() {
-            // on click, store X or O, inform GameManager to end turn
-            // Also, need to clear all event listeners
-            tile.removeEventListener('mouseover', updateTileSymbol);
-            tile.removeEventListener('mouseout', resetTileSymbol);
-            tile.removeEventListener('click', submitTile);
-            updateTileSymbol();
-            checkTiles(GameManager.getCurrentActivePlayer());
-            setTimeout( () => {
-                triggerNextTurn()
-            }, 0);
-        }
-
-        function triggerNextTurn() {
-            GameManager.TurnManager.startNewTurn();
-        }
-
-        function getSymbol() {
-            return symbol;
-        }
-
-        return {
-            getSymbol,
-        }
-    }
-
-    return {
-        info,
-        initialiseBoard
-    }
-})();
-
-function Player(number, symbol) {
-    let name = `Player ${number}`;
-    return {
-        name,
-        symbol
-    }
-}
-
