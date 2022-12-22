@@ -72,7 +72,7 @@ let Gameboard = (function() {
     }
 
     function createTile() {
-        let symbol;
+        let symbol = undefined;
         let tile = template.cloneNode(true);
 
         board.appendChild(tile);
@@ -87,6 +87,7 @@ let Gameboard = (function() {
         }
 
         function resetTileSymbol() {
+            symbol = undefined;
             tile.textContent = "";
         }
 
@@ -227,22 +228,83 @@ let GameManager = (function() {
             let currentOutcome = outcomes.win;
             let isWin;
 
+            // Check for 3 in a row of the player's symbol.
+            // horizontal: if all elements in boardRows[i] have the same symbol
+            // vertical: if symbol of boardRows[i][a] === boardRows[i+1][a] === boardRows[i+2][a] and so on
+            // positive diag
+            // negative diag
+
+            // We can't store all these sequentially because they're all changing the same currentOutcome
+            // What if I stored them in an object and iterated through all the methods, then if one returns win/draw, return that outcome
+            
+            // Check horizontal
+            // for (let i = 0; i < Gameboard.boardRows.length; i++) {
+            //     for (let j = 0; j < Gameboard.boardRows.length; j++) {
+            //         // Whut
+            //         let tileSymbol = Gameboard.boardRows[i][j].getSymbol();
+
+            //         console.log('CHECK NEW TILE, ' + i + ',' + j);
+            //         console.log('player symbol: ' + player.symbol);
+            //         console.log(tileSymbol);
+
+            //         if ( doesPlayerOwnTile(tileSymbol, String(player.symbol)) === false ) {
+            //             // If this check fails, exit loop
+            //             currentOutcome = outcomes.continue;
+
+            //             // Return works but it stops the whole function
+            //             // Break only exits out of the current loop
+            //             return;
+            //         }
+            //     }
+            // }
+
+            // Check vertical
+            // for (let i = 0; i < Gameboard.boardRows.length; i++) {
+            //     for (let j = 0; j < Gameboard.boardRows.length; j++) {
+            //         // Whut
+            //         let tileSymbol = Gameboard.boardRows[j][i].getSymbol();
+
+            //         console.log('CHECK NEW TILE, ' + i + ',' + j);
+            //         console.log('player symbol: ' + player.symbol);
+            //         console.log(tileSymbol);
+
+            //         if ( doesPlayerOwnTile(tileSymbol, String(player.symbol)) === false ) {
+            //             // If this check fails, exit loop
+            //             currentOutcome = outcomes.continue;
+
+            //             // Return works but it stops the whole function
+            //             // Break only exits out of the current loop
+            //             return;
+            //         }
+            //     }   
+            // }
+
             // Check positive diagonal
-            for (let i = 0; i < Gameboard.boardRows.length; i++) {
-                // We want to see if 0,0/1,1/2,2... are filled
-                let tileSymbol = Gameboard.boardRows[i][i].getSymbol();
+            // for (let i = 0; i < Gameboard.boardRows.length; i++) {
+            //     // We want to see if 0,0/1,1/2,2... are filled
+            //     let tileSymbol = Gameboard.boardRows[i][i].getSymbol();
 
-                console.log('CHECK NEW TILE, i = ' + i);
-                console.log(player);
-                console.log(tileSymbol);
-                console.log(doesPlayerOwnTile(tileSymbol, player));
+            //     console.log('CHECK NEW TILE, i = ' + i);
+            //     console.log(player);
+            //     console.log(tileSymbol);
+            //     console.log(doesPlayerOwnTile(tileSymbol, player));
 
-                if ( !(doesPlayerOwnTile(tileSymbol, player)) ) {
-                    // If this check fails, exit loop
-                    currentOutcome = outcomes.continue;
-                    break;
-                }   
-            }
+
+            // }
+
+            // Check negative diagonal
+            // for (let i = 0; i < Gameboard.boardRows.length; i++) {
+            //     let j = (Gameboard.boardRows.length - 1) - i;
+            //     let tileSymbol = Gameboard.boardRows[i][j].getSymbol();
+
+            //     console.log('CHECK NEW TILE, ' + i + ',' + j);
+            //     console.log('player symbol: ' + player.symbol);
+            //     console.log(tileSymbol);
+            //     console.log(doesPlayerOwnTile(tileSymbol, player));
+
+
+                
+            // }
             
             console.log(currentOutcome);
             return isWin;
@@ -260,11 +322,14 @@ let GameManager = (function() {
         }
 
 
-        function doesPlayerOwnTile(tileSymbol, player) {
+        function doesPlayerOwnTile(tileSymbol, playerSymbol) {
             let isPlayerOwned = false;
-            if (tileSymbol === player.symbol) {
+            console.log(typeof tileSymbol);
+            console.log(typeof playerSymbol);
+            if (tileSymbol == playerSymbol) {
                 isPlayerOwned = true;
             }
+            console.log(isPlayerOwned);
             return isPlayerOwned;
         }
 
