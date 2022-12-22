@@ -73,6 +73,23 @@ let GameManager = (function() {
         return currentActivePlayer;
     }
 
+    function checkGameState() {
+        // If 3 in a row, that player wins
+        // If board is 100% filled AND no 3 in a row (check win first), draw
+        // If neither, continue
+        // But since this is in Board, we should just return an outcome for GameManager to handle
+        
+        // check for columns, rows and diagonals
+        // at the end of each turn, get all of the active player's tiles
+        // search these tiles to see if they fulfil the win conditions
+
+        // IF no win, check draw (get # of squares, check vs. totalTurns)
+        // to easily see if the board has been filled or not
+
+        // If no draw, then startNewTurn()
+        
+    }
+
     let TurnManager = (function() {
         // Generate random starting player
         let playerCounter = Math.round(Math.random());
@@ -111,6 +128,7 @@ let GameManager = (function() {
 
 let Gameboard = (function() {
     const board = document.querySelector('#board');
+    // Create deep copy of DOM
     const template = document.querySelector('template').content.firstElementChild;
 
     // Controls size of game board
@@ -140,23 +158,60 @@ let Gameboard = (function() {
         board.style.setProperty('--board-size', boardSize);
     }
 
-    function checkGameState() {
-        // If 3 in a row, that player wins
-        // If board is 100% filled AND no 3 in a row (check win first), draw
-        // If neither, continue
-        // But since this is in Board, we should just return an outcome for GameManager to handle
+    function checkTiles(player) {
+        let outcomes = {
+            continue: "continue",
+            win: "win",
+            draw: "draw"
+        };
+        let currentOutcome = outcomes.win;
 
-        
+        // Check positive diagonal
+        for (let i = 0; i < boardRows.length; i++) {
+            // We want to see if 0,0/1,1/2,2... are filled
+            let tileSymbol = boardRows[i][i].getSymbol();
+
+            console.log('CHECK NEW TILE, i = ' + i);
+            console.log(player);
+            console.log(tileSymbol);
+            console.log(doesPlayerOwnTile(tileSymbol, player));
+
+            if ( !(doesPlayerOwnTile(tileSymbol, player)) ) {
+                // If this check fails, exit loop
+                currentOutcome = outcomes.continue;
+                break;
+            }
+
+            console.log(currentOutcome);
+        }
+    }
+
+    function doesPlayerOwnTile(tileSymbol, player) {
+        let isPlayerOwned = false;
+        if (tileSymbol === player.symbol) {
+            isPlayerOwned = true;
+        }
+        return isPlayerOwned;
+    }
+
+    function info() {
+        console.table(boardRows);
     }
 
     function createTile() {
         let symbol;
         let tile = template.cloneNode(true);
+
         board.appendChild(tile);
         // Bind events
         tile.addEventListener('mouseover', updateTileSymbol);
         tile.addEventListener('mouseout', resetTileSymbol);
         tile.addEventListener('click', submitTile);
+
+        function updateTileSymbol() {
+            symbol = GameManager.getCurrentActivePlayer().symbol;
+            tile.textContent = symbol;
+        }
 
         function resetTileSymbol() {
             tile.textContent = "";
@@ -169,24 +224,27 @@ let Gameboard = (function() {
             tile.removeEventListener('mouseout', resetTileSymbol);
             tile.removeEventListener('click', submitTile);
             updateTileSymbol();
-            triggerNextTurn();
-        }
-
-        function updateTileSymbol() {
-            symbol = GameManager.getCurrentActivePlayer().symbol;
-            tile.textContent = symbol;
+            checkTiles(GameManager.getCurrentActivePlayer());
+            setTimeout( () => {
+                triggerNextTurn()
+            }, 0);
         }
 
         function triggerNextTurn() {
             GameManager.TurnManager.startNewTurn();
         }
 
+        function getSymbol() {
+            return symbol;
+        }
+
         return {
-            symbol
+            getSymbol,
         }
     }
 
     return {
+        info,
         initialiseBoard
     }
 })();
