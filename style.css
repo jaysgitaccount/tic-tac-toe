@@ -57,3 +57,8 @@ h1 {
 .tile:hover {
     cursor: pointer;
 }
+
+.tile.submitted {
+    background-color: rgb(189, 189, 189);
+    cursor: default;
+}
