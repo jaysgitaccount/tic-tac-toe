@@ -63,7 +63,7 @@ let Gameboard = (function() {
     }
 
     function checkTiles(player) {
-        GameManager.TurnManager.checkWin(player);
+        GameManager.TurnManager.checkGameStatus(player);
         GameManager.TurnManager.checkDraw();
     }
 
@@ -176,28 +176,27 @@ let GameManager = (function() {
         return currentActivePlayer;
     }
 
-    function checkGameState() {
-        // If 3 in a row, that player wins
-        // If board is 100% filled AND no 3 in a row (check win first), draw
-        // If neither, continue
-        // But since this is in Board, we should just return an outcome for GameManager to handle
-        
-        // check for columns, rows and diagonals
-        // at the end of each turn, get all of the active player's tiles
-        // search these tiles to see if they fulfil the win conditions
-
-        // IF no win, check draw (get # of squares, check vs. totalTurns)
-        // to easily see if the board has been filled or not
-
-        // If no draw, then startNewTurn()
-        
-    }
-
     let TurnManager = (function() {
         // Generate random starting player
         let playerCounter = Math.round(Math.random());
         let totalTurns = 0;
         let maxTurns = Math.pow(Gameboard.boardSize, 2);
+
+        function checkGameStatus(player) {
+            // When a player clicks a tile, run this
+            // If no win fulfilled, check draw
+            // If no draw, outcome = continue
+
+            console.log(checkIsWin(player));
+
+            // executeNextAction(outcome);
+        }
+
+        function executeNextAction(outcome) {
+            // switch statement :)
+            // 
+        
+        }
 
         function startNewTurn() {
             // First, switch players
@@ -210,6 +209,7 @@ let GameManager = (function() {
 
             setCurrentActivePlayer(playerCounter);
             UIManager.updateTurnTracker();
+
             console.log('== NEWTURN ==')
             console.log('Player ' + (playerCounter + 1) + "'s turn, total turns: " + totalTurns)
 
@@ -219,44 +219,57 @@ let GameManager = (function() {
             }
         }
 
-        function checkWin(player) {
-            let outcomes = {
-                continue: "continue",
-                win: "win",
-                draw: "draw"
-            };
-            let currentOutcome = outcomes.win;
-            let isWin;
-
+        function checkIsWin(player) {
             // Check for 3 in a row of the player's symbol.
-            // horizontal: if all elements in boardRows[i] have the same symbol
-            // vertical: if symbol of boardRows[i][a] === boardRows[i+1][a] === boardRows[i+2][a] and so on
-            // positive diag
-            // negative diag
+            let isWin = false;
 
-            // We can't store all these sequentially because they're all changing the same currentOutcome
-            // What if I stored them in an object and iterated through all the methods, then if one returns win/draw, return that outcome
-            
-            // Check horizontal
-            // for (let i = 0; i < Gameboard.boardRows.length; i++) {
-            //     for (let j = 0; j < Gameboard.boardRows.length; j++) {
-            //         // Whut
-            //         let tileSymbol = Gameboard.boardRows[i][j].getSymbol();
+            let board = Gameboard.boardRows;
+            let playerSymbol = player.symbol;
 
-            //         console.log('CHECK NEW TILE, ' + i + ',' + j);
-            //         console.log('player symbol: ' + player.symbol);
-            //         console.log(tileSymbol);
 
-            //         if ( doesPlayerOwnTile(tileSymbol, String(player.symbol)) === false ) {
-            //             // If this check fails, exit loop
-            //             currentOutcome = outcomes.continue;
+            const checkRow = new Promise((resolve) => {
+                // Check for win in the rows
+                for (let i = 0; i < board.length; i++) {
+                    console.log('-- Checking row ' + i + ' --');
+                    let isRowWin = true;
 
-            //             // Return works but it stops the whole function
-            //             // Break only exits out of the current loop
-            //             return;
-            //         }
-            //     }
-            // }
+                    for (let j = 0; j < board.length; j++) {
+                        let tileSymbol = board[i][j].getSymbol();
+                        
+                        console.log('CHECK NEW TILE, ' + i + ',' + j);
+                        console.log('player symbol: ' + player.symbol);
+                        console.log('tile symbol: ' + tileSymbol);
+
+                        if (!doesPlayerOwnTile(tileSymbol, playerSymbol)) {
+                            // If any tile fails, stop checking row
+                            isRowWin = false;
+                            console.log('stop checking row ' + i)
+                            break;
+                        }
+                    }
+
+                    if (isRowWin) {
+                        // If any row fulfills the win
+                        isRowWin = true;
+                        resolve (isRowWin);
+                        return;
+                    } else if (i === (board.length - 1) && !isRowWin) {
+                        // If we checked all the rows and no win
+                        resolve(isRowWin);
+                    }
+                }
+            })
+
+            // Check all win conditions
+            Promise.all( [checkRow] ).then( outcomes => { 
+                console.log('== PROMISE ==') 
+                console.log(outcomes) 
+
+                // Return win if any win conditions fulfilled
+                isWin = outcomes.some( outcome => outcome === true );
+            });
+
+            return isWin;
 
             // Check vertical
             // for (let i = 0; i < Gameboard.boardRows.length; i++) {
@@ -264,7 +277,7 @@ let GameManager = (function() {
             //         // Whut
             //         let tileSymbol = Gameboard.boardRows[j][i].getSymbol();
 
-            //         console.log('CHECK NEW TILE, ' + i + ',' + j);
+            //         console.log('CHECK VERTICAL TILES, j:' + j + ', i:' + i);
             //         console.log('player symbol: ' + player.symbol);
             //         console.log(tileSymbol);
 
@@ -274,9 +287,9 @@ let GameManager = (function() {
 
             //             // Return works but it stops the whole function
             //             // Break only exits out of the current loop
-            //             return;
+            //             // return;
             //         }
-            //     }   
+            //     }
             // }
 
             // Check positive diagonal
@@ -301,13 +314,8 @@ let GameManager = (function() {
             //     console.log('player symbol: ' + player.symbol);
             //     console.log(tileSymbol);
             //     console.log(doesPlayerOwnTile(tileSymbol, player));
-
-
-                
+         
             // }
-            
-            console.log(currentOutcome);
-            return isWin;
         }
 
         function checkDraw() {
@@ -324,18 +332,17 @@ let GameManager = (function() {
 
         function doesPlayerOwnTile(tileSymbol, playerSymbol) {
             let isPlayerOwned = false;
-            console.log(typeof tileSymbol);
-            console.log(typeof playerSymbol);
+
             if (tileSymbol == playerSymbol) {
                 isPlayerOwned = true;
             }
-            console.log(isPlayerOwned);
+            console.log("is this player owned: " + isPlayerOwned);
             return isPlayerOwned;
         }
 
         return {
             startNewTurn,
-            checkWin,
+            checkGameStatus,
             checkDraw
         }
     })();
