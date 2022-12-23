@@ -21,12 +21,22 @@ let UIManager = (function() {
         turnTracker.textContent = `${GameManager.getCurrentActivePlayer().name}'s turn`;
     }
 
+    function displayWinnerInfo(player) {
+        turnTracker.textContent = `Congratulations, ${player.name} wins!`
+    }
+
+    function displayDrawInfo() {
+        turnTracker.textContent = `It's a draw`
+    }
+
     return {
         swapButton,
         boardOverlay,
         hideUI,
         updatePlayerInfo,
-        updateTurnTracker
+        updateTurnTracker,
+        displayWinnerInfo,
+        displayDrawInfo
     }
 })();
 
@@ -62,11 +72,6 @@ let Gameboard = (function() {
         board.style.setProperty('--board-size', boardSize);
     }
 
-    function checkTiles(player) {
-        GameManager.TurnManager.checkGameStatus(player);
-        GameManager.TurnManager.checkDraw();
-    }
-
     function info() {
         console.table(boardRows);
     }
@@ -94,18 +99,17 @@ let Gameboard = (function() {
         function submitTile() {
             // on click, store X or O, inform GameManager to end turn
             // Also, need to clear all event listeners
+
+            lockTile();
+            updateTileSymbol();
+            GameManager.TurnManager.updateGameState(GameManager.getCurrentActivePlayer());
+        }
+
+        function lockTile() {
             tile.removeEventListener('mouseover', updateTileSymbol);
             tile.removeEventListener('mouseout', resetTileSymbol);
             tile.removeEventListener('click', submitTile);
-            updateTileSymbol();
-            checkTiles(GameManager.getCurrentActivePlayer());
-            setTimeout( () => {
-                triggerNextTurn()
-            }, 0);
-        }
-
-        function triggerNextTurn() {
-            GameManager.TurnManager.startNewTurn();
+            tile.classList.add('submitted');
         }
 
         function getSymbol() {
@@ -113,7 +117,8 @@ let Gameboard = (function() {
         }
 
         return {
-            getSymbol
+            getSymbol,
+            lockTile
         }
     }
 
@@ -137,6 +142,8 @@ let GameManager = (function() {
     const states = ["X", "O"];
     const players = [];
     let currentActivePlayer;
+    let winningPlayer;
+    let board = Gameboard.boardRows;
 
     // Initialise UI
     UIManager.updatePlayerInfo(states);
@@ -176,26 +183,47 @@ let GameManager = (function() {
         return currentActivePlayer;
     }
 
+    function getWinningPlayer() {
+        return winningPlayer;
+    }
+
+    function endGame() {
+        for (let i = 0; i < board.length; i++) {
+            for (let j = 0; j < board.length; j++) {
+                board[i][j].lockTile();
+            }
+        }
+    }
+
+    function displayWin() {
+        UIManager.displayWinnerInfo(winningPlayer);
+    }
+    function displayDraw() {
+        UIManager.displayDrawInfo();
+    }
+
     let TurnManager = (function() {
         // Generate random starting player
         let playerCounter = Math.round(Math.random());
         let totalTurns = 0;
         let maxTurns = Math.pow(Gameboard.boardSize, 2);
 
-        function checkGameStatus(player) {
-            // When a player clicks a tile, run this
-            // If no win fulfilled, check draw
-            // If no draw, outcome = continue
+        function updateGameState(player) {
 
-            console.log(checkIsWin(player));
+            console.log('=== UPDATEGAMESTATE ====')
 
-            // executeNextAction(outcome);
-        }
+            if (checkIsWin(player)) {
+                endGame();
+                displayWin();
+            } else if (checkIsDraw()) {
+                endGame();
+                displayDraw();
+                console.log('draw')
+            } else {
+                console.log('continue')
+                startNewTurn();
+            }
 
-        function executeNextAction(outcome) {
-            // switch statement :)
-            // 
-        
         }
 
         function startNewTurn() {
@@ -212,22 +240,13 @@ let GameManager = (function() {
 
             console.log('== NEWTURN ==')
             console.log('Player ' + (playerCounter + 1) + "'s turn, total turns: " + totalTurns)
-
-            return {
-                playerCounter,
-                totalTurns
-            }
         }
 
         function checkIsWin(player) {
-            // Check for 3 in a row of the player's symbol.
             let isWin = false;
-
-            let board = Gameboard.boardRows;
             let playerSymbol = player.symbol;
 
-
-            const checkRow = new Promise((resolve) => {
+            const checkRows = function () {
                 // Check for win in the rows
                 for (let i = 0; i < board.length; i++) {
                     console.log('-- Checking row ' + i + ' --');
@@ -251,79 +270,108 @@ let GameManager = (function() {
                     if (isRowWin) {
                         // If any row fulfills the win
                         isRowWin = true;
-                        resolve (isRowWin);
-                        return;
+                        return isRowWin;
                     } else if (i === (board.length - 1) && !isRowWin) {
                         // If we checked all the rows and no win
-                        resolve(isRowWin);
+                        return isRowWin;
                     }
                 }
-            })
+            }
 
-            // Check all win conditions
-            Promise.all( [checkRow] ).then( outcomes => { 
-                console.log('== PROMISE ==') 
-                console.log(outcomes) 
+            const checkColumns = function() {
+                for (let i = 0; i < board.length; i++) {
+                    console.log('-- Checking column ' + i + ' --');
+                    let isColumnWin = true;
 
-                // Return win if any win conditions fulfilled
-                isWin = outcomes.some( outcome => outcome === true );
-            });
+                    for (let j = 0; j < board.length; j++) {
+                        let tileSymbol = board[j][i].getSymbol();
+                        
+                        console.log('CHECK NEW TILE, ' + j + ',' + i);
+                        console.log('player symbol: ' + player.symbol);
+                        console.log('tile symbol: ' + tileSymbol);
+
+                        if (!doesPlayerOwnTile(tileSymbol, playerSymbol)) {
+                            isColumnWin = false;
+                            console.log('stop checking column ' + i)
+                            break;
+                        }
+                    }
+
+                    if (isColumnWin) {
+                        isColumnWin = true;
+                        return isColumnWin;
+                    } else if (i === (board.length - 1) && !isColumnWin) {
+                        return isColumnWin;
+                    }
+                }
+            }
+
+            const checkPosDiag = function() {
+                for (let i = 0; i < board.length; i++) {
+                    let posDiagWin = false;
+                    
+                    let tileSymbol = board[i][i].getSymbol();
+
+                    console.log(
+                        'CHECKING POS DIAG, i = ' + i
+                    )
+                    console.log('player symbol: ' + player.symbol);
+                    console.log('tile symbol: ' + tileSymbol);
+                    
+                    if (!doesPlayerOwnTile(tileSymbol, playerSymbol)) {
+                        // If any tile fails check, exit
+                        return posDiagWin;
+                    } else if (i === (board.length - 1) && doesPlayerOwnTile(tileSymbol, playerSymbol)) {
+                        posDiagWin = true;
+                        return posDiagWin;
+                    }
+                }
+            }
+
+            const checkNegDiag = function() {
+                for (let i = 0; i < board.length; i++) {
+                    let negDiagWin = false;
+                    
+                    let tileSymbol = board[i][((board.length - 1) - i)].getSymbol();
+
+                    console.log(
+                        'CHECKING NEG DIAG, i = ' + i
+                    )
+                    console.log('player symbol: ' + player.symbol);
+                    console.log('tile symbol: ' + tileSymbol);
+                    
+                    if (!doesPlayerOwnTile(tileSymbol, playerSymbol)) {
+                        // If any tile fails check, exit
+                        return negDiagWin;
+                    } else if (i === (board.length - 1) && doesPlayerOwnTile(tileSymbol, playerSymbol)) {
+                        negDiagWin = true;
+                        return negDiagWin;
+                    }
+                }
+            }
+
+            // Consolidate all win checks
+            let winConditions = [checkRows(), checkColumns(), checkPosDiag(), checkNegDiag()];
+
+            console.log('==WIN CONDITIONS==')
+            console.log(winConditions)
+
+            isWin = winConditions.some( result => result === true );
+
+            if (isWin) {
+                // Set winning player
+                winningPlayer = player;
+                console.log('WINNER: ' + winningPlayer.name)
+            }
 
             return isWin;
-
-            // Check vertical
-            // for (let i = 0; i < Gameboard.boardRows.length; i++) {
-            //     for (let j = 0; j < Gameboard.boardRows.length; j++) {
-            //         // Whut
-            //         let tileSymbol = Gameboard.boardRows[j][i].getSymbol();
-
-            //         console.log('CHECK VERTICAL TILES, j:' + j + ', i:' + i);
-            //         console.log('player symbol: ' + player.symbol);
-            //         console.log(tileSymbol);
-
-            //         if ( doesPlayerOwnTile(tileSymbol, String(player.symbol)) === false ) {
-            //             // If this check fails, exit loop
-            //             currentOutcome = outcomes.continue;
-
-            //             // Return works but it stops the whole function
-            //             // Break only exits out of the current loop
-            //             // return;
-            //         }
-            //     }
-            // }
-
-            // Check positive diagonal
-            // for (let i = 0; i < Gameboard.boardRows.length; i++) {
-            //     // We want to see if 0,0/1,1/2,2... are filled
-            //     let tileSymbol = Gameboard.boardRows[i][i].getSymbol();
-
-            //     console.log('CHECK NEW TILE, i = ' + i);
-            //     console.log(player);
-            //     console.log(tileSymbol);
-            //     console.log(doesPlayerOwnTile(tileSymbol, player));
-
-
-            // }
-
-            // Check negative diagonal
-            // for (let i = 0; i < Gameboard.boardRows.length; i++) {
-            //     let j = (Gameboard.boardRows.length - 1) - i;
-            //     let tileSymbol = Gameboard.boardRows[i][j].getSymbol();
-
-            //     console.log('CHECK NEW TILE, ' + i + ',' + j);
-            //     console.log('player symbol: ' + player.symbol);
-            //     console.log(tileSymbol);
-            //     console.log(doesPlayerOwnTile(tileSymbol, player));
-         
-            // }
         }
 
-        function checkDraw() {
-            let isDraw;
+        function checkIsDraw() {
+            let isDraw = false;
 
             if (totalTurns === maxTurns) {
-                // Don't start a new turn because no tiles left.
-                // outcome: draw
+                isDraw = true;
             }
 
             return isDraw;
@@ -342,13 +390,13 @@ let GameManager = (function() {
 
         return {
             startNewTurn,
-            checkGameStatus,
-            checkDraw
+            updateGameState
         }
     })();
 
     return {
         TurnManager,
-        getCurrentActivePlayer
+        getCurrentActivePlayer,
+        getWinningPlayer
     }
 })();
