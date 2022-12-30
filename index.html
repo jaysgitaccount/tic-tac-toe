@@ -10,6 +10,7 @@
 </head>
 <body>
     <h1 class="center">Tic Tac Toe</h1>
+
     <div class="center container">
         <form class="center column" id="player-form">
             <legend>Enter your name & choose X or O</legend>
@@ -24,6 +25,7 @@
             <button class="center" type="submit">Submit</button>
         </form>
     </div>
+
     <div class="center container hidden" id="player-symbols">
         <button type="button" id="swap-button">Swap</button>
         <div id="player-display">
@@ -31,14 +33,22 @@
             <div></div>
         </div>
     </div>
+
     <div class="center container" id="turn-tracker"></div>
+
     <div class="board-wrapper">
         <div id="board-overlay">Click to start game</div>
         <div id="board"></div>
     </div>
+
     <template>
         <div class="tile"></div>
     </template>
+
+    <form class="center container hidden" id="reset-button">
+        <button type="submit">Reset</button>
+    </form>
+    
     <script src="./game-manager.js"></script>
 </body>
 </html>

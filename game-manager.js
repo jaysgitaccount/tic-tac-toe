@@ -4,10 +4,11 @@ let UIManager = (function() {
     const boardOverlay = document.querySelector('#board-overlay');
     const turnTracker = document.querySelector('#turn-tracker');
     const playerSymbols = document.querySelector('#player-symbols');
+    const resetButton = document.querySelector('#reset-button');
     const playerNames = [];
 
     initPlayerForm();
-    
+
     function initPlayerForm() {
         const form = document.querySelector('form');
         form.addEventListener('submit', event => {
@@ -53,6 +54,10 @@ let UIManager = (function() {
         return playerNames;
     }
 
+    function showResetButton() {
+        resetButton.classList.remove('hidden');
+    }
+
     return {
         swapButton,
         boardOverlay,
@@ -61,7 +66,8 @@ let UIManager = (function() {
         updatePlayerInfo,
         updateTurnTracker,
         displayWinnerInfo,
-        displayDrawInfo
+        displayDrawInfo,
+        showResetButton
     }
 })();
 
@@ -210,6 +216,8 @@ let GameManager = (function() {
                 board[i][j].lockTile();
             }
         }
+
+        UIManager.showResetButton();
     }
 
     function displayWin() {
