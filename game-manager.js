@@ -1,13 +1,33 @@
 let UIManager = (function() {
     const swapButton = document.querySelector('#swap-button');
-    const playerDisplayTexts = ["Player 1 = ", "Player 2 = "];
     const playerDisplays = Array.from(document.querySelector('#player-display').children);
     const boardOverlay = document.querySelector('#board-overlay');
     const turnTracker = document.querySelector('#turn-tracker');
+    const playerSymbols = document.querySelector('#player-symbols');
+    const playerNames = [];
+
+    initPlayerForm();
+    
+    function initPlayerForm() {
+        const form = document.querySelector('form');
+        form.addEventListener('submit', event => {
+            event.preventDefault();
+
+            let formData = new FormData(form);
+            
+            playerNames.push(formData.get("player1-name"));
+            playerNames.push(formData.get("player2-name"));
+
+            // Hide form after submit, show symbol UI
+            form.classList.add('hidden');
+            playerSymbols.classList.remove('hidden');
+            GameManager.initialisePregameUI();
+        })
+    }
 
     function updatePlayerInfo(states) {
         playerDisplays.forEach((text, index) => {
-            text.textContent = playerDisplayTexts[index];
+            text.textContent = `${playerNames[index]} = `;
             text.textContent += states[index];
         })
     }
@@ -29,9 +49,14 @@ let UIManager = (function() {
         turnTracker.textContent = `It's a draw`
     }
 
+    function getPlayerNames() {
+        return playerNames;
+    }
+
     return {
         swapButton,
         boardOverlay,
+        getPlayerNames,
         hideUI,
         updatePlayerInfo,
         updateTurnTracker,
@@ -122,8 +147,7 @@ let Gameboard = (function() {
     }
 })();
 
-function Player(number, symbol) {
-    let name = `Player ${number}`;
+function Player(name, symbol) {
     return {
         name,
         symbol
@@ -137,10 +161,11 @@ let GameManager = (function() {
     let winningPlayer;
     let board = Gameboard.boardRows;
 
-    // Initialise UI
-    UIManager.updatePlayerInfo(states);
-    UIManager.swapButton.addEventListener('click', swapPlayerInfo);
-    UIManager.boardOverlay.addEventListener('click', startGame);
+    function initialisePregameUI() {
+        UIManager.updatePlayerInfo(states);
+        UIManager.swapButton.addEventListener('click', swapPlayerInfo);
+        UIManager.boardOverlay.addEventListener('click', startGame);
+    }
     
     function swapPlayerInfo() {
         states.reverse();
@@ -162,7 +187,8 @@ let GameManager = (function() {
 
     function initialisePlayers() {
         for (let i = 0; i < states.length; i++) {
-            players.push(Player((i + 1), states[i]));
+            // Initialise each player with corresponding name and state
+            players.push(Player((UIManager.getPlayerNames()[i]), states[i]));
         }
     }
 
@@ -307,7 +333,12 @@ let GameManager = (function() {
             }
 
             // Consolidate all win checks
-            let winConditions = [checkRows(), checkColumns(), checkPosDiag(), checkNegDiag()];
+            let winConditions = [
+                checkRows(),
+                checkColumns(),
+                checkPosDiag(),
+                checkNegDiag()
+            ];
 
             isWin = winConditions.some( result => result === true );
 
@@ -336,6 +367,7 @@ let GameManager = (function() {
             if (tileSymbol == playerSymbol) {
                 isPlayerOwned = true;
             }
+
             return isPlayerOwned;
         }
 
@@ -347,6 +379,7 @@ let GameManager = (function() {
 
     return {
         TurnManager,
+        initialisePregameUI,
         getCurrentActivePlayer,
         getWinningPlayer
     }
