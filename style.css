@@ -8,12 +8,30 @@ h1 {
     font-weight: 400;
 }
 
-.center {
-    display: flex;
-    justify-content: center;
+.container {
     margin: 1rem auto;
 }
 
+.container * {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.column {
+    flex-direction: column;
+}
+
+.hidden {
+    display: none;
+}
 
 .board-wrapper {
     margin: 1rem auto;
@@ -61,4 +79,21 @@ h1 {
 .tile.submitted {
     background-color: rgb(189, 189, 189);
     cursor: default;
+}
+
+#player-form input {
+    margin-left: 0.2rem;
+    width: 100px;
+    height: 20px;
+}
+
+#player-form button {
+    width: 100px;
+    height: 40px;
+}
+
+#swap-button {
+    width: 70px;
+    height: 50px;
+    margin-right: 1rem;
 }
