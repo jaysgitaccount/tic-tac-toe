@@ -1,6 +1,8 @@
 # Tic Tac Toe
 Assignment from [The Odin Project](https://www.theodinproject.com/lessons/node-path-javascript-tic-tac-toe)
 
+[LINK TO LIVE DEMO](https://jaysgitaccount.github.io/tic-tac-toe/)
+
 ## Task
 Instructions:
 1. Store gameboard as array inside Gameboard object
@@ -17,7 +19,6 @@ If you need multiples of something, use factory functions.
 5. Write function that allows players to add marks to a specific spot on click. Tie this to the DOM. Don't forget to stop them from overwriting spots that are filled!
 6. Build logic that checks for when game is over: 3 in a row, or tie.
 7. UI: allow players to enter names, include start/restart button, congratulate winner.
-8. Optional: create AI so player can play against PC.
 
 ## Notes to self
 - `<template></template>` HTML element: clone the contents, not the template itself, or you'll get a `DocumentFragment` and won't be able to bind events to it. I did this with `const template = document.querySelector('template').content.firstElementChild;`, and used it with `let tile = template.cloneNode(true);`
